@@ -50,6 +50,10 @@
 #include <sys/syscall.h>
 #endif
 
+#if defined(__FreeBSD__)
+#include <pthread_np.h>
+#endif
+
 #if defined(_WIN32)
 #include <windows.h>
 // This include needs to be here due to our coding conventions.  Unfortunately
@@ -206,6 +210,8 @@ uint32_t GetTid() {
   return owner;
 #elif defined(__BIONIC__)
   return gettid();
+#elif defined(__FreeBSD__)
+  return pthread_getthreadid_np();
 #elif defined(_WIN32)
   return static_cast<pid_t>(::GetCurrentThreadId());
 #else
@@ -313,7 +319,7 @@ void SetThreadName(pthread_t thr, const char* thread_name) {
   } else {
     s = thread_name + len - 15;
   }
-#if defined(__linux__) || defined(_WIN32)
+#if defined(__linux__) || defined(_WIN32) || defined(__FreeBSD__)
   // pthread_setname_np fails rather than truncating long strings.
   char buf[16];       // MAX_TASK_COMM_LEN=16 is hard-coded in the kernel.
   strncpy(buf, s, sizeof(buf)-1);
